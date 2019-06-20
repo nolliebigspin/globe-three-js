@@ -12,6 +12,9 @@
 
 		<script>
 
+			const earthRadius = 5;
+			const cloudRadius = earthRadius * 1.01;
+
 			// initialising renderer
 			var renderer = new THREE.WebGLRenderer();
 			renderer.setSize( window.innerWidth, window.innerHeight );
@@ -22,21 +25,33 @@
 			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
 			var controls = new THREE.OrbitControls( camera, renderer.domElement );
 
-			
-
-			var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-			var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-			var line = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-			var cube = new THREE.Mesh( geometry, material );
-			scene.add( cube );
-
-			camera.position.z = 5;
+			camera.position.z = 10;
 			controls.update();
+
+			// initialising texture and bind it to a material
+			var texEarth = new THREE.TextureLoader().load( './assets/textures/earthmap4k.jpg' );
+			var matEarth = new THREE.MeshBasicMaterial( {map: texEarth} );
+
+			var texClouds = new THREE.TextureLoader().load( './assets/textures/fair_clouds_4k.png' );
+			var matClouds = new THREE.MeshBasicMaterial( {map: texClouds} );
+			matClouds.transparent = true;
+
+
+			var geoEarth = new THREE.SphereGeometry( earthRadius, 32, 32);
+			var geoClouds = new THREE.SphereGeometry( cloudRadius, 32, 32);
+
+			//var line = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+			var earth = new THREE.Mesh( geoEarth, matEarth );
+			var clouds = new THREE.Mesh( geoClouds, matClouds );
+
+			scene.add( earth, clouds);
+			
 
 			var animate = function () {
 				requestAnimationFrame( animate );
 
-				// cube.rotation.y += 0.05;
+				earth.rotation.y -= 0.005;
+				clouds.rotation.y -= 0.003;
 
 				renderer.render( scene, camera );
 			};
