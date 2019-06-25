@@ -17,11 +17,13 @@
 </head>
 
 <body>
+
 	<script src="assets/js/three.js"></script>
 	<script src="assets/js/OrbitControls.js"></script>
 
 	<script>
 
+		// constants
 		const earthRadius = 5;
 		const cloudRadius = earthRadius * 1.01;
 
@@ -54,27 +56,26 @@
 			specularMap: specEarth,
 			specular: new THREE.Color('grey')
 		})
-
 		var texClouds = new THREE.TextureLoader().load('./assets/textures/fair_clouds_4k.png');
 		var matClouds = new THREE.MeshBasicMaterial({ map: texClouds });
 		matClouds.transparent = true;
 
-
+		// create Mesh
 		var geoEarth = new THREE.SphereGeometry(earthRadius, 32, 32);
 		var geoClouds = new THREE.SphereGeometry(cloudRadius, 32, 32);
 
 		var earth = new THREE.Mesh(geoEarth, matEarth);
 		var clouds = new THREE.Mesh(geoClouds, matClouds);
+
+		// bind clouds to earth
 		earth.add(clouds);
 
-
-		scene.add(earth);
-		scene.add(ambLight);
-		scene.add(dirLight);
+		// add Lights and earthObject to scene
+		scene.add(earth, ambLight, dirLight);
 
 
 		// earth rotation + cloud rotation
-		var animate = function () {
+		var animate = function() {
 			requestAnimationFrame(animate);
 
 			earth.rotation.y -= 0.005;
@@ -82,6 +83,10 @@
 
 			renderer.render(scene, camera);
 		};
+
+		var addPorts = function() {
+
+		}
 
 		animate();
 	</script>
