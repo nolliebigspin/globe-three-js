@@ -27,7 +27,6 @@
 	<script src="assets/js/OrbitControls.js"></script>
 
 	<script>
-
 		// constants
 		const earthRadius = 5;
 		const cloudRadius = earthRadius * 1.01;
@@ -63,6 +62,12 @@
 		var texClouds = new THREE.TextureLoader().load('./assets/textures/fair_clouds_4k.png');
 		var matClouds = new THREE.MeshBasicMaterial({ map: texClouds });
 		matClouds.transparent = true;
+
+		// ports canvas texture
+		var portsCanvas = document.createElement("canvas");
+		var texPortsTexture = portsCanvas.getContext('2d');
+		texPortsTexture.canvas.width = 4096;
+		texPortsTexture.canvas.height = 2048;
 
 		// create Mesh
 		var geoEarth = new THREE.SphereGeometry(earthRadius, 32, 32);
@@ -127,25 +132,29 @@
 		}
 
 
-		var addPorts = function () {
-			var ports = document.createElement("ports");
+		function addPorts() {
+			// 2d canvas context: texPortsTexture 
 
-			var portsArr = new XMLHttpRequest();
-			portsArr.open('GET', './assets/data/wpi.csv');
+			var request = new XMLHttpRequest();
+			request.open('GET', './assets/data/wpi.csv');
 
-			portsArr.onload = function () {
-				portsArray = CSVToArray(portsArr.response, ";");
-				return portsArray;
+			request.onload = function () {
+				data = CSVToArray(this.response, ";");
+				console.log(data);
+
+				// modify texPortsTexture here!!!
+
 			};
-			portsArr.onerror = function () {
-				console.log("Can not load csv!");
+
+			request.onerror = function () {
+				console.log("Cannot load csv!");
 			};
+
+			request.send();
 		}
 
+		addPorts();
 		animate();
-		var ports = addPorts();
-		console.log(ports);
-
 	</script>
 
 </body>
