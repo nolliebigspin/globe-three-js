@@ -31,7 +31,7 @@
 		// constants
 		const earthRadius = 5;
 		const cloudRadius = earthRadius * 1.01;
-		const portRadius = earthRadius * 1.001;
+		const portRadius = earthRadius * 1.005;
 
 		// initialising renderer
 		var renderer = new THREE.WebGLRenderer();
@@ -67,7 +67,6 @@
 
 		var portMap = addPorts();
 		var texPorts = new THREE.Texture(portMap);
-		texPorts.needsUpdate = true;
 		matPorts = new THREE.MeshPhongMaterial({ map: texPorts, transparent: true, opacity: 0.6 });
 		geoPorts = new THREE.SphereGeometry(portRadius, 32, 32);
 		portMesh = new THREE.Mesh(geoPorts, matPorts);
