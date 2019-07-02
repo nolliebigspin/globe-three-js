@@ -31,6 +31,7 @@
 		// constants
 		const earthRadius = 5;
 		const cloudRadius = earthRadius * 1.01;
+		const portRadius = earthRadius * 1.001;
 
 		// initialising renderer
 		var renderer = new THREE.WebGLRenderer();
@@ -64,11 +65,13 @@
 		var matClouds = new THREE.MeshBasicMaterial({ map: texClouds });
 		matClouds.transparent = true;
 
-		// ports canvas texture
-		var portsCanvas = document.createElement("canvas");
-		var texPortsTexture = portsCanvas.getContext('2d');
-		texPortsTexture.canvas.width = 4096;
-		texPortsTexture.canvas.height = 2048;
+		var portMap = addPorts();
+		var texPorts = new THREE.Texture(portMap);
+		texPorts.needsUpdate = true;
+		matPorts = new THREE.MeshPhongMaterial({ map: texPorts, transparent: true, opacity: 0.6 });
+		geoPorts = new THREE.SphereGeometry(portRadius, 32, 32);
+		portMesh = new THREE.Mesh(geoPorts, matPorts);
+
 
 		// create Mesh
 		var geoEarth = new THREE.SphereGeometry(earthRadius, 32, 32);
@@ -83,6 +86,56 @@
 		// add Lights and earthObject to scene
 		scene.add(earth, ambLight, dirLight);
 
+		// add Ports to scene
+		scene.add(portMesh);
+
+		function addPorts() {
+			var canvas = document.createElement('canvas');
+			ctx = canvas.getContext('2d');
+			canvas.width = 4096;
+			canvas.height = 2048;
+
+			var ports, xCanvas, yCanvas;
+			var xPos, yPos, xGrad, xMin, yGrad, yMin;
+			ports = fetching();
+			ports = CSVToArray(ports, ';');
+			for (var i = 0; i < ports.length; i++) {
+				if (ports[i][25] != "L") {
+					ports.splice(i, 1);
+				};
+			};
+			for (var k = 0; k < ports.length; k++) {
+				xGrad = ports[k][7];
+				xMin = ports[k][8];
+				xPos = xGrad + "." + xMin;
+				if (ports[k][9] == 'W') {
+					xPos = xPos * -1;
+				}
+				yGrad = ports[k][4];
+				yMin = ports[k][5];
+				yPos = yGrad + "." + yMin;
+				if (ports[k][6] == 'S') {
+					yPos = yPos * -1;
+				}
+				xCanvas = ((4096 / 360.0) * (180 + xPos));
+				yCanvas = ((2048 / 180.0) * (90 - yPos))
+				ctx.beginPath();
+				ctx.arc(xCanvas, yCanvas, 1, 0, 2 * Math.PI);
+				ctx.fillStyle = "red";
+				ctx.fill();
+				ctx.lineWidth = 2;
+				ctx.strokeStyle = "white";
+				ctx.stroke();
+			}
+			return canvas;
+		};
+
+
+		async function fetching() {
+			var response = await fetch("./assets/data/wpi.csv");
+			return await response.text();
+		};
+
 
 		// earth rotation + cloud rotation
 		var animate = function () {
@@ -90,33 +143,10 @@
 
 			earth.rotation.y -= 0.005;
 			clouds.rotation.y -= 0.002;
+			portMesh.rotation.y -= 0.005;
 
 			renderer.render(scene, camera);
 		};
-
-
-		function addPorts() {
-			// 2d canvas context: texPortsTexture 
-
-			var request = new XMLHttpRequest();
-			request.open('GET', './assets/data/wpi.csv');
-
-			request.onload = function () {
-				data = CSVToArray(this.response, ";");
-				console.log(data);
-
-				// modify texPortsTexture here!!!
-
-			};
-
-			request.onerror = function () {
-				console.log("Cannot load csv!");
-			};
-
-			request.send();
-		}
-
-		addPorts();
 		animate();
 	</script>
 
