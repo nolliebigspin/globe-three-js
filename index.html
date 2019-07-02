@@ -11,7 +11,12 @@
 
 		canvas {
 			width: 100%;
-			height: 100%
+			height: 100%;
+		}
+
+		ports {
+			width: 4096px;
+			height: 2048px;
 		}
 	</style>
 </head>
@@ -49,7 +54,6 @@
 		var texEarth = new THREE.TextureLoader().load('./assets/textures/earthmap4k.jpg');
 		var bumpEarth = new THREE.TextureLoader().load('./assets/textures/earth_normalmap_flat4k.jpg');
 		var specEarth = new THREE.TextureLoader().load('./assets/textures/earthspec4k.jpg');
-		//var matEarth = new THREE.MeshBasicMaterial({ map: texEarth });
 		var matEarth = new THREE.MeshPhongMaterial({
 			map: texEarth,
 			normalMap: bumpEarth,
@@ -75,7 +79,7 @@
 
 
 		// earth rotation + cloud rotation
-		var animate = function() {
+		var animate = function () {
 			requestAnimationFrame(animate);
 
 			earth.rotation.y -= 0.005;
@@ -84,11 +88,64 @@
 			renderer.render(scene, camera);
 		};
 
-		var addPorts = function() {
 
+		function CSVToArray(strData, strDelimiter) {
+
+			strDelimiter = (strDelimiter || ",");
+
+			var objPattern = new RegExp(
+				(
+					"(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+					"(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+					"([^\"\\" + strDelimiter + "\\r\\n]*))"
+				),
+				"gi"
+			);
+			var arrData = [[]];
+			var arrMatches = null;
+
+			while (arrMatches = objPattern.exec(strData)) {
+				var strMatchedDelimiter = arrMatches[1];
+				if (
+					strMatchedDelimiter.length &&
+					(strMatchedDelimiter != strDelimiter)
+				) {
+					arrData.push([]);
+				}
+				if (arrMatches[2]) {
+					var strMatchedValue = arrMatches[2].replace(
+						new RegExp("\"\"", "g"),
+						"\""
+					);
+				} else {
+					var strMatchedValue = arrMatches[3];
+
+				}
+				arrData[arrData.length - 1].push(strMatchedValue);
+			}
+			return (arrData);
+		}
+
+
+		var addPorts = function () {
+			var ports = document.createElement("ports");
+
+			var portsArr = new XMLHttpRequest();
+			portsArr.open('GET', './assets/data/wpi.csv');
+
+			portsArr.onload = function () {
+				portsArray = CSVToArray(portsArr.response, ";");
+				return portsArray;
+			};
+			portsArr.onerror = function () {
+				console.log("Can not load csv!");
+			};
 		}
 
 		animate();
+		var ports = addPorts();
+		console.log(ports);
+
 	</script>
 
 </body>
