@@ -66,7 +66,7 @@
 		matClouds.transparent = true;
 
 		var portMap = addPorts();
-		var texPorts = new THREE.Texture(portMap);
+		var texPorts = new THREE.CanvasTexture(portMap);
 		matPorts = new THREE.MeshPhongMaterial({ map: texPorts, transparent: true, opacity: 0.6 });
 		geoPorts = new THREE.SphereGeometry(portRadius, 32, 32);
 		portMesh = new THREE.Mesh(geoPorts, matPorts);
@@ -89,50 +89,61 @@
 		scene.add(portMesh);
 
 		function addPorts() {
-			var canvas = document.createElement('canvas');
-			ctx = canvas.getContext('2d');
-			canvas.width = 4096;
-			canvas.height = 2048;
+			var req = new XMLHttpRequest();
 
-			var ports, xCanvas, yCanvas;
-			var xPos, yPos, xGrad, xMin, yGrad, yMin;
-			ports = fetching();
-			ports = CSVToArray(ports, ';');
-			for (var i = 0; i < ports.length; i++) {
-				if (ports[i][25] != "L") {
-					ports.splice(i, 1);
+			req.addEventListener("load", function () {
+				var canvas = document.createElement('canvas');
+				ctx = canvas.getContext('2d');
+				canvas.width = 4096;
+				canvas.height = 2048;
+
+				var ports, xCanvas, yCanvas;
+				var xPos, yPos, xGrad, xMin, yGrad, yMin;
+				ports = CSVToArray(this.responseText, ';');
+
+				for (var i = 0; i < ports.length; i++) {
+					if (ports[i][25] != "L") {
+						ports.splice(i, 1);
+					};
 				};
-			};
-			for (var k = 0; k < ports.length; k++) {
-				xGrad = ports[k][7];
-				xMin = ports[k][8];
-				xPos = xGrad + "." + xMin;
-				if (ports[k][9] == 'W') {
-					xPos = xPos * -1;
-				}
-				yGrad = ports[k][4];
-				yMin = ports[k][5];
-				yPos = yGrad + "." + yMin;
-				if (ports[k][6] == 'S') {
-					yPos = yPos * -1;
-				}
-				xCanvas = ((4096 / 360.0) * (180 + xPos));
-				yCanvas = ((2048 / 180.0) * (90 - yPos))
-				ctx.beginPath();
-				ctx.arc(xCanvas, yCanvas, 1, 0, 2 * Math.PI);
-				ctx.fillStyle = "red";
-				ctx.fill();
-				ctx.lineWidth = 2;
-				ctx.strokeStyle = "white";
-				ctx.stroke();
-			}
-			return canvas;
-		};
 
+				for (var k = 0; k < ports.length; k++) {
+					xGrad = ports[k][7];
+					xMin = ports[k][8];
+					xPos = xGrad + "." + xMin;
 
-		async function fetching() {
-			var response = await fetch("./assets/data/wpi.csv");
-			return await response.text();
+					if (ports[k][9] == 'W') {
+						xPos = xPos * -1;
+					}
+
+					yGrad = ports[k][4];
+					yMin = ports[k][5];
+					yPos = yGrad + "." + yMin;
+
+					if (ports[k][6] == 'S') {
+						yPos = yPos * -1;
+					}
+
+					xCanvas = ((4096 / 360.0) * (180 + xPos));
+					yCanvas = ((2048 / 180.0) * (90 - yPos));
+
+					ctx.beginPath();
+					ctx.arc(xCanvas, yCanvas, 1, 0, 2 * Math.PI);
+					ctx.fillStyle = "red";
+					ctx.fill();
+					ctx.lineWidth = 2;
+					ctx.strokeStyle = "white";
+					ctx.stroke();
+				}
+
+				return canvas;
+			});
+			req.addEventListener("error", function () {
+				console.error("cannot load port data!")
+			});
+
+			req.open("GET", "./assets/data/wpi.csv");
+			req.send();
 		};
 
 
