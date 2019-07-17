@@ -11,7 +11,12 @@
 
 		canvas {
 			width: 100%;
-			height: 100%
+			height: 100%;
+		}
+
+		ports {
+			width: 4096px;
+			height: 2048px;
 		}
 	</style>
 </head>
@@ -20,12 +25,13 @@
 
 	<script src="assets/js/three.js"></script>
 	<script src="assets/js/OrbitControls.js"></script>
+	<script src="assets/js/CSVToArray.js"></script>
 
 	<script>
-
 		// constants
 		const earthRadius = 5;
 		const cloudRadius = earthRadius * 1.01;
+		const portRadius = earthRadius * 1.005;
 
 		// initialising renderer
 		var renderer = new THREE.WebGLRenderer();
@@ -49,7 +55,6 @@
 		var texEarth = new THREE.TextureLoader().load('./assets/textures/earthmap4k.jpg');
 		var bumpEarth = new THREE.TextureLoader().load('./assets/textures/earth_normalmap_flat4k.jpg');
 		var specEarth = new THREE.TextureLoader().load('./assets/textures/earthspec4k.jpg');
-		//var matEarth = new THREE.MeshBasicMaterial({ map: texEarth });
 		var matEarth = new THREE.MeshPhongMaterial({
 			map: texEarth,
 			normalMap: bumpEarth,
@@ -59,6 +64,16 @@
 		var texClouds = new THREE.TextureLoader().load('./assets/textures/fair_clouds_4k.png');
 		var matClouds = new THREE.MeshBasicMaterial({ map: texClouds });
 		matClouds.transparent = true;
+
+		var portMap = addPorts();
+		var texPorts = new THREE.CanvasTexture(portMap);
+		matPorts = new THREE.MeshPhongMaterial({
+			map: texPorts,
+			transparent: true,
+			opacity: 0.6
+		});
+		geoPorts = new THREE.SphereGeometry(portRadius, 32, 32);
+		portMesh = new THREE.Mesh(geoPorts, matPorts);
 
 		// create Mesh
 		var geoEarth = new THREE.SphereGeometry(earthRadius, 32, 32);
@@ -73,21 +88,88 @@
 		// add Lights and earthObject to scene
 		scene.add(earth, ambLight, dirLight);
 
+		// add Ports to scene
+		scene.add(portMesh);
+
+		function updatePortTexture() {
+			texPorts.needsUpdate = true;
+		}
+
+		function addPorts() {
+			var canvas = document.createElement('canvas');
+			canvas.width = 4096;
+			canvas.height = 2048;
+
+			var req = new XMLHttpRequest();
+
+			req.addEventListener("load", function () {
+				var ports = CSVToArray(this.responseText, ';');
+				var ctx = canvas.getContext('2d');
+
+				// data
+				var ports;
+				// calculations
+				var xMin, yGrad, yMin;
+
+				for (var i = 0; i < ports.length; i++) {
+					if (ports[i][25] != "L") {
+						ports.splice(i, 1);
+					}
+				}
+
+				for (var k = 0; k < ports.length; k++) {
+					var xGrad = ports[k][7];
+					var yGrad = ports[k][4];
+					var xMin = ports[k][8];
+					var yMin = ports[k][5];
+					var xPos = parseFloat(xGrad + "." + xMin);
+					var yPos = parseFloat(yGrad + "." + yMin);
+
+					// negate if needed
+					if (ports[k][9] == 'W') {
+						xPos = xPos * -1;
+					}
+					if (ports[k][6] == 'S') {
+						yPos = yPos * -1;
+					}
+
+					// transform to 2d position
+					var xCanvas = ((4096 / 360.0) * (180 + xPos));
+					var yCanvas = ((2048 / 180.0) * (90 - yPos));
+
+					// draw point
+					ctx.beginPath();
+					ctx.arc(xCanvas, yCanvas, 1, 0, 2 * Math.PI);
+					ctx.fillStyle = "red";
+					ctx.fill();
+					ctx.lineWidth = 3;
+					ctx.strokeStyle = "red";
+					ctx.stroke();
+				}
+
+				updatePortTexture();
+			});
+			req.addEventListener("error", function () {
+				console.error("cannot load port data!")
+			});
+
+			req.open("GET", "./assets/data/wpi.csv");
+			req.send();
+
+			return canvas;
+		};
+
 
 		// earth rotation + cloud rotation
-		var animate = function() {
+		var animate = function () {
 			requestAnimationFrame(animate);
 
 			earth.rotation.y -= 0.005;
 			clouds.rotation.y -= 0.002;
+			portMesh.rotation.y -= 0.005;
 
 			renderer.render(scene, camera);
 		};
-
-		var addPorts = function() {
-
-		}
-
 		animate();
 	</script>
 
